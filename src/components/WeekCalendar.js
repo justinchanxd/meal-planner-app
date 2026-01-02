@@ -144,14 +144,52 @@ const WeekCalendar = ({ resetTrigger }) => {
   };
 
   // Export as JSON
-  const exportMeals = () => {
-    const dataStr = JSON.stringify(meals, null, 2);
+  const exportMeals = async () => {
+    const filteredMeals = Object.fromEntries(
+      Object.entries(meals)
+        .filter(([key, value]) => {
+          const lunch = value?.lunch || 0;
+          const dinner = value?.dinner || 0;
+          return lunch > 0 || dinner > 0;
+        })
+        .sort(([a], [b]) => a.localeCompare(b))
+    );
+    const dataStr = JSON.stringify(filteredMeals, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "meal-planner.json";
-    link.click();
+    const file = new File([dataBlob], "meal-planner.json", {
+      type: "application/json",
+    });
+
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [file] })
+    ) {
+      try {
+        await navigator.share({
+          title: "Meal Planner Data",
+          text: "Exported meal planner data",
+          files: [file],
+        });
+      } catch (err) {
+        console.error("Share failed:", err);
+        // Fallback to download
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "meal-planner.json";
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } else {
+      // Fallback for browsers without Web Share API
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "meal-planner.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   // Import from JSON
@@ -197,7 +235,7 @@ const WeekCalendar = ({ resetTrigger }) => {
 
   return (
     <Box
-      sx={{ p: 1, backgroundColor: "background.default", minHeight: "100vh" }}
+      sx={{ p: 0.5, backgroundColor: "background.default", minHeight: "100vh" }}
     >
       <Typography variant="body1" align="center" gutterBottom>
         <IconButton
@@ -216,18 +254,16 @@ const WeekCalendar = ({ resetTrigger }) => {
           <ArrowForwardIcon fontSize="small" />
         </IconButton>
       </Typography>
-      <Grid container spacing={0.5} justifyContent="center">
+      <Grid container spacing={1} justifyContent="center">
         {weekDays.map((date, i) => {
           const dateStr = date.toISOString().split("T")[0];
           const dayName = date.toLocaleDateString("en-US", {
             weekday: "short",
           });
-          const displayDate = date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          });
+          const month = date.toLocaleDateString("en-US", { month: "short" });
+          const day = date.toLocaleDateString("en-US", { day: "numeric" });
           return (
-            <Grid item xs={1.2} sm={6} md={1.7} key={dateStr}>
+            <Grid item xs={1.6} sm={6} md={1.6} key={dateStr}>
               <Paper
                 elevation={3}
                 sx={{
@@ -239,7 +275,7 @@ const WeekCalendar = ({ resetTrigger }) => {
                   cursor: "pointer",
                   border: selectedDays.includes(i)
                     ? "2px solid #2196f3"
-                    : "none",
+                    : "2px solid transparent",
                 }}
                 onClick={() => toggleDaySelection(i)}
               >
@@ -318,7 +354,10 @@ const WeekCalendar = ({ resetTrigger }) => {
                   </Box>
                 </Box>
                 <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
-                  {displayDate}
+                  {month}
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                  {day}
                 </Typography>
               </Paper>
             </Grid>

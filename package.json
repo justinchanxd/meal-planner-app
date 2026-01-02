@@ -5,7 +5,7 @@
   "homepage": "https://justinchanxd.github.io/meal-planner-app/",
   "main": "src/index.js",
   "scripts": {
-    "start": "react-scripts start",
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -21,6 +21,7 @@
     "react-scripts": "4.0.3"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "gh-pages": "^6.3.0"
   },
   "keywords": [
