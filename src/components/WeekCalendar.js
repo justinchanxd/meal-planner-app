@@ -58,7 +58,7 @@ const WeekCalendar = ({ resetTrigger }) => {
 
   const weekDays = getWeekDays(currentWeekStart);
 
-  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedDays, setSelectedDays] = useState([0, 1, 2, 3, 4, 5, 6]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
@@ -197,18 +197,26 @@ const WeekCalendar = ({ resetTrigger }) => {
 
   return (
     <Box
-      sx={{ p: 2, backgroundColor: "background.default", minHeight: "100vh" }}
+      sx={{ p: 1, backgroundColor: "background.default", minHeight: "100vh" }}
     >
-      <Typography variant="h4" align="center" gutterBottom>
-        <IconButton onClick={() => navigateWeek(-1)}>
-          <ArrowBackIcon />
+      <Typography variant="body1" align="center" gutterBottom>
+        <IconButton
+          size="small"
+          sx={{ width: 20, height: 20, mr: 1 }}
+          onClick={() => navigateWeek(-1)}
+        >
+          <ArrowBackIcon fontSize="small" />
         </IconButton>
         Week of {formatWeek(currentWeekStart)}
-        <IconButton onClick={() => navigateWeek(1)}>
-          <ArrowForwardIcon />
+        <IconButton
+          size="small"
+          sx={{ width: 20, height: 20, ml: 1 }}
+          onClick={() => navigateWeek(1)}
+        >
+          <ArrowForwardIcon fontSize="small" />
         </IconButton>
       </Typography>
-      <Grid container spacing={1} justifyContent="center">
+      <Grid container spacing={0.5} justifyContent="center">
         {weekDays.map((date, i) => {
           const dateStr = date.toISOString().split("T")[0];
           const dayName = date.toLocaleDateString("en-US", {
@@ -219,11 +227,11 @@ const WeekCalendar = ({ resetTrigger }) => {
             day: "numeric",
           });
           return (
-            <Grid item xs={1.7} sm={6} md={1.7} key={dateStr}>
+            <Grid item xs={1.2} sm={6} md={1.7} key={dateStr}>
               <Paper
                 elevation={3}
                 sx={{
-                  p: 1,
+                  p: 0.5,
                   textAlign: "center",
                   backgroundColor: selectedDays.includes(i)
                     ? "primary.light"
@@ -235,36 +243,43 @@ const WeekCalendar = ({ resetTrigger }) => {
                 }}
                 onClick={() => toggleDaySelection(i)}
               >
-                <Typography variant="h6">{dayName}</Typography>
-                <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
+                  {dayName}
+                </Typography>
+                <Box sx={{ mt: 0.25 }}>
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      mb: 1,
+                      mb: 0.25,
                     }}
                   >
                     <IconButton
                       size="small"
+                      sx={{ width: 0.5, height: 0.5 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         updateMeal(dateStr, "lunch", -1);
                       }}
                     >
-                      <RemoveIcon />
+                      <RemoveIcon fontSize="0.1rem" />
                     </IconButton>
-                    <Typography variant="h5" sx={{ mx: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8rem", mx: 0.25 }}
+                    >
                       {meals[dateStr]?.lunch || 0}
                     </Typography>
                     <IconButton
                       size="small"
+                      sx={{ width: 0.5, height: 0.5 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         updateMeal(dateStr, "lunch", 1);
                       }}
                     >
-                      <AddIcon />
+                      <AddIcon fontSize="0.01rem" />
                     </IconButton>
                   </Box>
                   <Box
@@ -276,42 +291,57 @@ const WeekCalendar = ({ resetTrigger }) => {
                   >
                     <IconButton
                       size="small"
+                      sx={{ width: 0.5, height: 0.5 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         updateMeal(dateStr, "dinner", -1);
                       }}
                     >
-                      <RemoveIcon />
+                      <RemoveIcon fontSize="0.1rem" />
                     </IconButton>
-                    <Typography variant="h5" sx={{ mx: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8rem", mx: 0.25 }}
+                    >
                       {meals[dateStr]?.dinner || 0}
                     </Typography>
                     <IconButton
                       size="small"
+                      sx={{ width: 0.5, height: 0.5 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         updateMeal(dateStr, "dinner", 1);
                       }}
                     >
-                      <AddIcon />
+                      <AddIcon fontSize="0.01rem" />
                     </IconButton>
                   </Box>
                 </Box>
-                <Typography variant="h6">{displayDate}</Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                  {displayDate}
+                </Typography>
               </Paper>
             </Grid>
           );
         })}
       </Grid>
-      <Typography variant="h5" align="center" sx={{ mt: 8 }}>
-        Selected Summary: Lunch: {selectedLunch}, Dinner: {selectedDinner},
+      <Typography variant="body1" align="center" sx={{ mt: 2 }}>
+        Selected Summary:
+      </Typography>
+      <Typography variant="body2" align="center">
+        Lunch: {selectedLunch}
+      </Typography>
+      <Typography variant="body2" align="center">
+        Dinner: {selectedDinner}
+      </Typography>
+      <Typography variant="body2" align="center">
         Total: {selectedTotal}
       </Typography>
       {/* <Typography variant="h5" align="center" sx={{ mt: 2 }}>
         Weekly Summary: Lunch: {totalLunch}, Dinner: {totalDinner}, Total:{" "}
         {totalMeals}
       </Typography> */}
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 8, gap: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 1 }}>
         <Button variant="contained" onClick={saveMeals}>
           Save
         </Button>
@@ -322,7 +352,7 @@ const WeekCalendar = ({ resetTrigger }) => {
           Unselect All
         </Button>
       </Box>
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 1, gap: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 0.5, gap: 1 }}>
         <Button variant="outlined" onClick={exportMeals}>
           Export
         </Button>
