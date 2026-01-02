@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Meal Planner App is a React.js application with Material-UI, designed to help users plan meals for each day of the week. It features a weekly calendar with intuitive controls for lunch and dinner portions, day selection, summaries, and data persistence.
+The Meal Planner App is a React.js application with Material-UI, designed to help users plan meals for each day of the week. 
+It features a weekly calendar with intuitive controls for lunch and dinner portions, day selection, summaries, and data persistence.
+Powered by AI.
 
 ## Features
 
