@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.js": "/meal-planner-app/static/js/main.a15d7e77.chunk.js",
-    "main.js.map": "/meal-planner-app/static/js/main.a15d7e77.chunk.js.map",
+    "main.js": "/meal-planner-app/static/js/main.9f0b8060.chunk.js",
+    "main.js.map": "/meal-planner-app/static/js/main.9f0b8060.chunk.js.map",
     "runtime-main.js": "/meal-planner-app/static/js/runtime-main.c065253f.js",
     "runtime-main.js.map": "/meal-planner-app/static/js/runtime-main.c065253f.js.map",
     "static/js/2.84dd6488.chunk.js": "/meal-planner-app/static/js/2.84dd6488.chunk.js",
@@ -12,6 +12,6 @@
   "entrypoints": [
     "static/js/runtime-main.c065253f.js",
     "static/js/2.84dd6488.chunk.js",
-    "static/js/main.a15d7e77.chunk.js"
+    "static/js/main.9f0b8060.chunk.js"
   ]
 }
