@@ -15,6 +15,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import { CARD_MIN_HEIGHT } from "../utils/constants";
 
 const WeekCalendar = ({ resetTrigger }) => {
   const getMonday = (date) => {
@@ -58,7 +59,13 @@ const WeekCalendar = ({ resetTrigger }) => {
 
   const weekDays = getWeekDays(currentWeekStart);
 
-  const [selectedDays, setSelectedDays] = useState([0, 1, 2, 3, 4, 5, 6]);
+  const [selectedMeals, setSelectedMeals] = useState(() => {
+    const initial = [];
+    for (let i = 0; i < 7; i++) {
+      initial.push(`${i}-lunch`, `${i}-dinner`);
+    }
+    return initial;
+  });
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
@@ -82,24 +89,33 @@ const WeekCalendar = ({ resetTrigger }) => {
     }
   }, [resetTrigger]);
 
-  // Toggle day selection
-  const toggleDaySelection = (index) => {
-    setSelectedDays((prev) =>
-      prev.includes(index) ? prev.filter((d) => d !== index) : [...prev, index]
+  // Toggle meal selection
+  const toggleMealSelection = (dayIndex, type) => {
+    const key = `${dayIndex}-${type}`;
+    setSelectedMeals((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     );
   };
 
   // Calculate selected summary
-  const selectedLunch = selectedDays.reduce(
-    (sum, idx) =>
-      sum + (meals[weekDays[idx].toISOString().split("T")[0]]?.lunch || 0),
-    0
-  );
-  const selectedDinner = selectedDays.reduce(
-    (sum, idx) =>
-      sum + (meals[weekDays[idx].toISOString().split("T")[0]]?.dinner || 0),
-    0
-  );
+  const selectedLunch = selectedMeals
+    .filter((key) => key.endsWith("-lunch"))
+    .reduce((sum, key) => {
+      const dayIndex = parseInt(key.split("-")[0]);
+      return (
+        sum +
+        (meals[weekDays[dayIndex].toISOString().split("T")[0]]?.lunch || 0)
+      );
+    }, 0);
+  const selectedDinner = selectedMeals
+    .filter((key) => key.endsWith("-dinner"))
+    .reduce((sum, key) => {
+      const dayIndex = parseInt(key.split("-")[0]);
+      return (
+        sum +
+        (meals[weekDays[dayIndex].toISOString().split("T")[0]]?.dinner || 0)
+      );
+    }, 0);
   const selectedTotal = selectedLunch + selectedDinner;
   const totalLunch = weekDays.reduce(
     (sum, date) => sum + (meals[date.toISOString().split("T")[0]]?.lunch || 0),
@@ -263,103 +279,140 @@ const WeekCalendar = ({ resetTrigger }) => {
           const month = date.toLocaleDateString("en-US", { month: "short" });
           const day = date.toLocaleDateString("en-US", { day: "numeric" });
           return (
-            <Grid item xs={1.6} sm={6} md={1.6} key={dateStr}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 0.5,
-                  textAlign: "center",
-                  backgroundColor: selectedDays.includes(i)
-                    ? "primary.light"
-                    : "background.paper",
-                  cursor: "pointer",
-                  border: selectedDays.includes(i)
-                    ? "2px solid #2196f3"
-                    : "2px solid transparent",
-                }}
-                onClick={() => toggleDaySelection(i)}
-              >
-                <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
-                  {dayName}
-                </Typography>
-                <Box sx={{ mt: 0.25 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      mb: 0.25,
-                    }}
-                  >
-                    <IconButton
-                      size="small"
-                      sx={{ width: 0.5, height: 0.5 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateMeal(dateStr, "lunch", -1);
+            <Grid item xs={1.6} sm={4} md={2} key={dateStr}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                {/* Day Info Card */}
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 0.5,
+                    textAlign: "center",
+                    backgroundColor: "background.paper",
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                    {dayName}
+                  </Typography>
+                  <br></br>
+                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                    {month} {day}
+                  </Typography>
+                </Paper>
+                {/* Lunch Card */}
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 0.5,
+                    textAlign: "center",
+                    backgroundColor: selectedMeals.includes(`${i}-lunch`)
+                      ? "primary.light"
+                      : "background.paper",
+                    cursor: "pointer",
+                    border: selectedMeals.includes(`${i}-lunch`)
+                      ? "2px solid #2196f3"
+                      : "2px solid transparent",
+                    minHeight: CARD_MIN_HEIGHT,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                  onClick={() => toggleMealSelection(i, "lunch")}
+                >
+                  <Box sx={{ mt: 0.25 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      <RemoveIcon fontSize="0.1rem" />
-                    </IconButton>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: "0.8rem", mx: 0.25 }}
-                    >
-                      {meals[dateStr]?.lunch || 0}
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      sx={{ width: 0.5, height: 0.5 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateMeal(dateStr, "lunch", 1);
-                      }}
-                    >
-                      <AddIcon fontSize="0.01rem" />
-                    </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{ width: 0.5, height: 0.5 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateMeal(dateStr, "lunch", -1);
+                        }}
+                      >
+                        <RemoveIcon fontSize="0.1rem" />
+                      </IconButton>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontSize: "0.8rem", mx: 0.25 }}
+                      >
+                        {meals[dateStr]?.lunch || 0}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        sx={{ width: 0.5, height: 0.5 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateMeal(dateStr, "lunch", 1);
+                        }}
+                      >
+                        <AddIcon fontSize="0.01rem" />
+                      </IconButton>
+                    </Box>
                   </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <IconButton
-                      size="small"
-                      sx={{ width: 0.5, height: 0.5 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateMeal(dateStr, "dinner", -1);
+                </Paper>
+                {/* Dinner Card */}
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 0.5,
+                    textAlign: "center",
+                    backgroundColor: selectedMeals.includes(`${i}-dinner`)
+                      ? "primary.light"
+                      : "background.paper",
+                    cursor: "pointer",
+                    border: selectedMeals.includes(`${i}-dinner`)
+                      ? "2px solid #2196f3"
+                      : "2px solid transparent",
+                    minHeight: CARD_MIN_HEIGHT,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                  onClick={() => toggleMealSelection(i, "dinner")}
+                >
+                  <Box sx={{ mt: 0.25 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      <RemoveIcon fontSize="0.1rem" />
-                    </IconButton>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: "0.8rem", mx: 0.25 }}
-                    >
-                      {meals[dateStr]?.dinner || 0}
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      sx={{ width: 0.5, height: 0.5 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateMeal(dateStr, "dinner", 1);
-                      }}
-                    >
-                      <AddIcon fontSize="0.01rem" />
-                    </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{ width: 0.5, height: 0.5 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateMeal(dateStr, "dinner", -1);
+                        }}
+                      >
+                        <RemoveIcon fontSize="0.1rem" />
+                      </IconButton>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontSize: "0.8rem", mx: 0.25 }}
+                      >
+                        {meals[dateStr]?.dinner || 0}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        sx={{ width: 0.5, height: 0.5 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateMeal(dateStr, "dinner", 1);
+                        }}
+                      >
+                        <AddIcon fontSize="0.01rem" />
+                      </IconButton>
+                    </Box>
                   </Box>
-                </Box>
-                <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
-                  {month}
-                </Typography>
-                <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
-                  {day}
-                </Typography>
-              </Paper>
+                </Paper>
+              </Box>
             </Grid>
           );
         })}
@@ -387,7 +440,7 @@ const WeekCalendar = ({ resetTrigger }) => {
         <Button variant="outlined" onClick={clearAllMeals}>
           Clear All
         </Button>
-        <Button variant="outlined" onClick={() => setSelectedDays([])}>
+        <Button variant="outlined" onClick={() => setSelectedMeals([])}>
           Unselect All
         </Button>
       </Box>
