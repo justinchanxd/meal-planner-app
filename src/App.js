@@ -113,10 +113,7 @@ function App() {
         </List>
       </Drawer>
       <Routes>
-        <Route
-          path="/"
-          element={<WeekCalendar resetTrigger={resetTrigger} />}
-        />
+        <Route path="/" element={<WeekCalendar resetTrigger={resetTrigger} />} />
         <Route path="/recipe" element={<RecipeManagement />} />
       </Routes>
     </ThemeProvider>
