@@ -10,14 +10,11 @@ import {
   ListItem,
   ListItemText,
   CssBaseline,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import WeekCalendar from "./components/WeekCalendar";
+import RecipeManagement from "./components/RecipeManagement";
 
 const theme = createTheme({
   palette: {
@@ -44,6 +41,7 @@ const theme = createTheme({
 function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [resetTrigger, setResetTrigger] = useState(0);
+  const location = useLocation();
 
   return (
     <ThemeProvider theme={theme}>
@@ -58,7 +56,7 @@ function App() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h5" sx={{ ml: 2 }}>
-            Weekly Meal Planner
+            Meal Planner 🍳
           </Typography>
         </Toolbar>
       </AppBar>
@@ -66,16 +64,61 @@ function App() {
         <List sx={{ width: 250 }}>
           <ListItem
             button
+            component={Link}
+            to="/"
+            selected={location.pathname === "/"}
             onClick={() => {
               setResetTrigger((prev) => prev + 1);
               setDrawerOpen(false);
             }}
+            sx={{
+              backgroundColor:
+                location.pathname === "/"
+                  ? "primary.light"
+                  : "transparent",
+              "&.Mui-selected": {
+                backgroundColor: "primary.light",
+                "&:hover": {
+                  backgroundColor: "primary.main",
+                },
+              },
+            }}
           >
-            <ListItemText primary="Homepage" sx={{ fontSize: "1.2rem" }} />
+            <ListItemText
+              primary="Calendar"
+              sx={{ fontSize: "1.2rem" }}
+            />
+          </ListItem>
+          <ListItem
+            button
+            component={Link}
+            to="/recipe"
+            selected={location.pathname === "/recipe"}
+            onClick={() => setDrawerOpen(false)}
+            sx={{
+              backgroundColor:
+                location.pathname === "/recipe"
+                  ? "primary.light"
+                  : "transparent",
+              "&.Mui-selected": {
+                backgroundColor: "primary.light",
+                "&:hover": {
+                  backgroundColor: "primary.main",
+                },
+              },
+            }}
+          >
+            <ListItemText primary="Recipe" sx={{ fontSize: "1.2rem" }} />
           </ListItem>
         </List>
       </Drawer>
-      <WeekCalendar resetTrigger={resetTrigger} />
+      <Routes>
+        <Route
+          path="/"
+          element={<WeekCalendar resetTrigger={resetTrigger} />}
+        />
+        <Route path="/recipe" element={<RecipeManagement />} />
+      </Routes>
     </ThemeProvider>
   );
 }

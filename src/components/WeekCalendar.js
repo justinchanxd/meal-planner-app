@@ -13,9 +13,33 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
-import { CARD_MIN_HEIGHT } from "../utils/constants";
+import MealCard from "./MealCard";
+import {
+  CARD_MIN_HEIGHT,
+  STORAGE_KEY,
+  LOCALE,
+  DATE_OPTIONS_WEEKDAY,
+  DATE_OPTIONS_MONTH,
+  DATE_OPTIONS_DAY,
+  DATE_OPTIONS_MONTH_DAY,
+  BORDER_COLOR_SELECTED,
+  FONT_SIZE_CAPTION,
+  FONT_SIZE_BODY,
+  FONT_SIZE_BUTTON,
+  ICON_FONT_SIZE,
+  MIME_TYPE_JSON,
+  EXPORT_FILENAME,
+  DIALOG_TITLE_SAVED,
+  DIALOG_MESSAGE_SAVED,
+  ALERT_INVALID_JSON,
+  ALERT_IMPORTED,
+  BEFORE_UNLOAD_MESSAGE,
+  SHARE_TITLE,
+  SHARE_TEXT,
+  DATE_REGEX,
+  BUTTON_SIZE,
+  DIALOG_BUTTON_OK,
+} from "../utils/constants";
 
 const WeekCalendar = ({ resetTrigger }) => {
   const getMonday = (date) => {
@@ -32,18 +56,18 @@ const WeekCalendar = ({ resetTrigger }) => {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem("mealPlanner");
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       // Filter to only date-based keys (YYYY-MM-DD)
       const cleanMeals = Object.fromEntries(
         Object.entries(parsed).filter(([key]) =>
-          /^\d{4}-\d{2}-\d{2}$/.test(key)
+          DATE_REGEX.test(key)
         )
       );
       setMeals(cleanMeals);
       // Update localStorage with cleaned data
-      localStorage.setItem("mealPlanner", JSON.stringify(cleanMeals));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanMeals));
     }
   }, []);
 
@@ -59,13 +83,7 @@ const WeekCalendar = ({ resetTrigger }) => {
 
   const weekDays = getWeekDays(currentWeekStart);
 
-  const [selectedMeals, setSelectedMeals] = useState(() => {
-    const initial = [];
-    for (let i = 0; i < 7; i++) {
-      initial.push(`${i}-lunch`, `${i}-dinner`);
-    }
-    return initial;
-  });
+  const [selectedMeals, setSelectedMeals] = useState([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
@@ -74,8 +92,7 @@ const WeekCalendar = ({ resetTrigger }) => {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue =
-          "You have unsaved changes. Are you sure you want to leave?";
+        e.returnValue = BEFORE_UNLOAD_MESSAGE;
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -97,25 +114,17 @@ const WeekCalendar = ({ resetTrigger }) => {
     );
   };
 
-  // Calculate selected summary
-  const selectedLunch = selectedMeals
-    .filter((key) => key.endsWith("-lunch"))
-    .reduce((sum, key) => {
-      const dayIndex = parseInt(key.split("-")[0]);
-      return (
-        sum +
-        (meals[weekDays[dayIndex].toISOString().split("T")[0]]?.lunch || 0)
-      );
-    }, 0);
-  const selectedDinner = selectedMeals
-    .filter((key) => key.endsWith("-dinner"))
-    .reduce((sum, key) => {
-      const dayIndex = parseInt(key.split("-")[0]);
-      return (
-        sum +
-        (meals[weekDays[dayIndex].toISOString().split("T")[0]]?.dinner || 0)
-      );
-    }, 0);
+  // Generalized calculation for selected meals
+  const calculateSelected = (mealType) =>
+    selectedMeals
+      .filter((key) => key.endsWith(`-${mealType}`))
+      .reduce((sum, key) => {
+        const dayIndex = parseInt(key.split("-")[0]);
+        return sum + (meals[weekDays[dayIndex].toISOString().split("T")[0]]?.[mealType] || 0);
+      }, 0);
+
+  const selectedLunch = calculateSelected("lunch");
+  const selectedDinner = calculateSelected("dinner");
   const selectedTotal = selectedLunch + selectedDinner;
   const totalLunch = weekDays.reduce(
     (sum, date) => sum + (meals[date.toISOString().split("T")[0]]?.lunch || 0),
@@ -154,7 +163,7 @@ const WeekCalendar = ({ resetTrigger }) => {
 
   // Save to localStorage
   const saveMeals = () => {
-    localStorage.setItem("mealPlanner", JSON.stringify(meals));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
     setHasUnsavedChanges(false);
     setSaveDialogOpen(true);
   };
@@ -171,9 +180,9 @@ const WeekCalendar = ({ resetTrigger }) => {
         .sort(([a], [b]) => a.localeCompare(b))
     );
     const dataStr = JSON.stringify(filteredMeals, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const file = new File([dataBlob], "meal-planner.json", {
-      type: "application/json",
+    const dataBlob = new Blob([dataStr], { type: MIME_TYPE_JSON });
+    const file = new File([dataBlob], EXPORT_FILENAME, {
+      type: MIME_TYPE_JSON,
     });
 
     if (
@@ -183,8 +192,8 @@ const WeekCalendar = ({ resetTrigger }) => {
     ) {
       try {
         await navigator.share({
-          title: "Meal Planner Data",
-          text: "Exported meal planner data",
+          title: SHARE_TITLE,
+          text: SHARE_TEXT,
           files: [file],
         });
       } catch (err) {
@@ -193,7 +202,7 @@ const WeekCalendar = ({ resetTrigger }) => {
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = "meal-planner.json";
+        link.download = EXPORT_FILENAME;
         link.click();
         URL.revokeObjectURL(url);
       }
@@ -202,7 +211,7 @@ const WeekCalendar = ({ resetTrigger }) => {
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "meal-planner.json";
+      link.download = EXPORT_FILENAME;
       link.click();
       URL.revokeObjectURL(url);
     }
@@ -217,10 +226,10 @@ const WeekCalendar = ({ resetTrigger }) => {
         try {
           const imported = JSON.parse(e.target.result);
           setMeals(imported);
-          localStorage.setItem("mealPlanner", JSON.stringify(imported));
-          alert("Meals imported!");
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+          alert(ALERT_IMPORTED);
         } catch (err) {
-          alert("Invalid JSON file");
+          alert(ALERT_INVALID_JSON);
         }
       };
       reader.readAsText(file);
@@ -240,46 +249,25 @@ const WeekCalendar = ({ resetTrigger }) => {
   const formatWeek = (start) => {
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
-    return `${start.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })} - ${end.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    })}`;
+    return `${start.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH_DAY)} - ${end.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH_DAY)}`;
   };
 
   return (
-    <Box
-      sx={{ p: 0.5, backgroundColor: "background.default", minHeight: "100vh" }}
-    >
-      <Typography variant="body1" align="center" gutterBottom>
-        <IconButton
-          size="small"
-          sx={{ width: 20, height: 20, mr: 1 }}
-          onClick={() => navigateWeek(-1)}
-        >
-          <ArrowBackIcon fontSize="small" />
-        </IconButton>
+    <Box className="pageContainer">
+      <Typography variant="h5" className="titleTypography">
+        Meal Calendar📅
+      </Typography>
+      <Typography variant="body1" className="subtitleTypography">
         Week of {formatWeek(currentWeekStart)}
-        <IconButton
-          size="small"
-          sx={{ width: 20, height: 20, ml: 1 }}
-          onClick={() => navigateWeek(1)}
-        >
-          <ArrowForwardIcon fontSize="small" />
-        </IconButton>
       </Typography>
       <Grid container spacing={1} justifyContent="center">
         {weekDays.map((date, i) => {
           const dateStr = date.toISOString().split("T")[0];
-          const dayName = date.toLocaleDateString("en-US", {
-            weekday: "short",
-          });
-          const month = date.toLocaleDateString("en-US", { month: "short" });
-          const day = date.toLocaleDateString("en-US", { day: "numeric" });
+          const dayName = date.toLocaleDateString(LOCALE, DATE_OPTIONS_WEEKDAY);
+          const month = date.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH);
+          const day = date.toLocaleDateString(LOCALE, DATE_OPTIONS_DAY);
           return (
-            <Grid item xs={1.6} sm={4} md={2} key={dateStr}>
+            <Grid item xs={1.6} sm={1.5} md={1.5} key={dateStr}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {/* Day Info Card */}
                 <Paper
@@ -290,135 +278,27 @@ const WeekCalendar = ({ resetTrigger }) => {
                     backgroundColor: "background.paper",
                   }}
                 >
-                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                  <Typography variant="caption" sx={{ fontSize: FONT_SIZE_CAPTION }}>
                     {dayName}
                   </Typography>
                   <br></br>
-                  <Typography variant="caption" sx={{ fontSize: "0.6rem" }}>
+                  <Typography variant="caption" sx={{ fontSize: FONT_SIZE_CAPTION }}>
                     {month} {day}
                   </Typography>
                 </Paper>
                 {/* Lunch Card */}
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 0.5,
-                    textAlign: "center",
-                    backgroundColor: selectedMeals.includes(`${i}-lunch`)
-                      ? "primary.light"
-                      : "background.paper",
-                    cursor: "pointer",
-                    border: selectedMeals.includes(`${i}-lunch`)
-                      ? "2px solid #2196f3"
-                      : "2px solid transparent",
-                    minHeight: CARD_MIN_HEIGHT,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                  }}
-                  onClick={() => toggleMealSelection(i, "lunch")}
-                >
-                  <Box sx={{ mt: 0.25 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        sx={{ width: 0.5, height: 0.5 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateMeal(dateStr, "lunch", -1);
-                        }}
-                      >
-                        <RemoveIcon fontSize="0.1rem" />
-                      </IconButton>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontSize: "0.8rem", mx: 0.25 }}
-                      >
-                        {meals[dateStr]?.lunch || 0}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        sx={{ width: 0.5, height: 0.5 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateMeal(dateStr, "lunch", 1);
-                        }}
-                      >
-                        <AddIcon fontSize="0.01rem" />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                </Paper>
+                <MealCard dateStr={dateStr} type="lunch" i={i} meals={meals} selectedMeals={selectedMeals} toggleMealSelection={toggleMealSelection} updateMeal={updateMeal} />
                 {/* Dinner Card */}
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 0.5,
-                    textAlign: "center",
-                    backgroundColor: selectedMeals.includes(`${i}-dinner`)
-                      ? "primary.light"
-                      : "background.paper",
-                    cursor: "pointer",
-                    border: selectedMeals.includes(`${i}-dinner`)
-                      ? "2px solid #2196f3"
-                      : "2px solid transparent",
-                    minHeight: CARD_MIN_HEIGHT,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                  }}
-                  onClick={() => toggleMealSelection(i, "dinner")}
-                >
-                  <Box sx={{ mt: 0.25 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        sx={{ width: 0.5, height: 0.5 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateMeal(dateStr, "dinner", -1);
-                        }}
-                      >
-                        <RemoveIcon fontSize="0.1rem" />
-                      </IconButton>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontSize: "0.8rem", mx: 0.25 }}
-                      >
-                        {meals[dateStr]?.dinner || 0}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        sx={{ width: 0.5, height: 0.5 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          updateMeal(dateStr, "dinner", 1);
-                        }}
-                      >
-                        <AddIcon fontSize="0.01rem" />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                </Paper>
+                <MealCard dateStr={dateStr} type="dinner" i={i} meals={meals} selectedMeals={selectedMeals} toggleMealSelection={toggleMealSelection} updateMeal={updateMeal} />
               </Box>
             </Grid>
           );
         })}
       </Grid>
+
+
       <Typography variant="body1" align="center" sx={{ mt: 2 }}>
-        Selected Summary:
+        📊Selected Summary: 
       </Typography>
       <Typography variant="body2" align="center">
         Lunch: {selectedLunch}
@@ -429,35 +309,32 @@ const WeekCalendar = ({ resetTrigger }) => {
       <Typography variant="body2" align="center">
         Total: {selectedTotal}
       </Typography>
-      {/* <Typography variant="h5" align="center" sx={{ mt: 2 }}>
-        Weekly Summary: Lunch: {totalLunch}, Dinner: {totalDinner}, Total:{" "}
-        {totalMeals}
-      </Typography> */}
+      
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 1 }}>
-        <Button variant="contained" onClick={saveMeals}>
+        <Button variant="contained" onClick={saveMeals} className="buttonMp">
           Save
         </Button>
-        <Button variant="outlined" onClick={clearAllMeals}>
+        <Button variant="outlined" onClick={clearAllMeals} className="buttonMp">
           Clear All
         </Button>
-        <Button variant="outlined" onClick={() => setSelectedMeals([])}>
+        {/* <Button variant="outlined" onClick={() => setSelectedMeals([])} className="buttonMp">
           Unselect All
-        </Button>
+        </Button> */}
       </Box>
       <Box sx={{ display: "flex", justifyContent: "center", mt: 0.5, gap: 1 }}>
-        <Button variant="outlined" onClick={exportMeals}>
+        <Button variant="outlined" onClick={exportMeals} className="buttonMp">
           Export
         </Button>
-        <Button variant="outlined" component="label">
+        <Button variant="outlined" component="label" className="buttonMp">
           Import
           <input type="file" accept=".json" hidden onChange={importMeals} />
         </Button>
       </Box>
       <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
-        <DialogTitle>Data Saved</DialogTitle>
-        <DialogContent>Meal data saved successfully.</DialogContent>
+        <DialogTitle>{DIALOG_TITLE_SAVED}</DialogTitle>
+        <DialogContent>{DIALOG_MESSAGE_SAVED}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setSaveDialogOpen(false)}>OK</Button>
+          <Button onClick={() => setSaveDialogOpen(false)} className="buttonMp">{DIALOG_BUTTON_OK}</Button>
         </DialogActions>
       </Dialog>
     </Box>

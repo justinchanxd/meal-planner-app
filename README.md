@@ -2,36 +2,19 @@
 
 ## Overview
 
-The Meal Planner App is a React.js application with Material-UI, designed to help users plan meals for each day of the week. 
-It features a weekly calendar with intuitive controls for lunch and dinner portions, day selection, summaries, and data persistence.
+The Meal Planner App is a React.js application with Material-UI, designed to help users plan meals. 
+It features intuitive controls, summaries, and data persistence.
 Powered by AI.
 
 ## Features
 
-- **Weekly Calendar**: Navigate weeks with arrow buttons.
-- **Day Selection**: Select days by clicking; selections persist by day of the week across navigations.
-- **Meal Controls**: Increment/decrement lunch and dinner portions with +/- buttons.
-- **Summaries**: View selected days' and weekly totals.
+- **Weekly Calendar**: Manage lunch dinner portion 
+- **Recipe**: Manage recipe
 - **Data Persistence**: Auto-save to localStorage; export/import as JSON.
-- **Responsive Design**: Optimized for mobile, including iPhone 12 mini.
+- **Responsive Design**: Optimized for mobile, tested on iPhone 12 mini.
 - **Material-UI Theming**: Clean, modern interface.
 
-## Project Structure
 
-```
-meal-planner-app
-├── public
-│   └── index.html
-├── src
-│   ├── components
-│   │   └── WeekCalendar.js
-│   ├── utils
-│   │   └── storage.js
-│   ├── App.js
-│   └── index.js
-├── package.json
-└── README.md
-```
 
 ## Getting Started
 
@@ -97,14 +80,6 @@ Generates optimized build in `build` folder.
 4. In GitHub repo settings > Pages, set source to `gh-pages` branch.
 
 App will be live at `https://yourusername.github.io/meal-planner-app/`.
-
-## Usage
-
-- Navigate weeks with arrows.
-- Click days to select (highlights persist).
-- Adjust meals with +/- buttons.
-- View summaries for selected and weekly totals.
-- Save automatically; export/import JSON for backup.
 
 ## Contributing
 

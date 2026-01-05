@@ -1,0 +1,59 @@
+/* Global styles for Meal Planner App */
+
+.buttonMp {
+  font-size: 0.8rem !important;
+  text-transform: none !important;
+}
+
+/* Page container */
+.pageContainer {
+  padding: 16px !important;
+  background-color: #fafafa !important; /* MUI background.default approximation */
+  min-height: 100vh !important;
+}
+
+/* Typography */
+.titleTypography {
+  text-align: center !important;
+  margin-bottom: 16px !important;
+}
+
+.subtitleTypography {
+  text-align: center !important;
+  margin-bottom: 16px !important;
+}
+
+/* TextField */
+.searchTextField {
+  max-width: 400px !important;
+}
+
+.textField {
+  width: 100% !important;
+  margin: 16px 0 8px 0 !important;
+}
+
+/* Dialog */
+.dialog {
+  max-width: 600px !important;
+  width: 100% !important;
+}
+
+/* Table row */
+.tableRow {
+  cursor: pointer !important;
+}
+
+/* Box spacing */
+.boxMb2 {
+  margin-bottom: 16px !important;
+}
+
+.boxGap2 {
+  gap: 16px !important;
+}
+
+/* Button */
+.buttonFixed {
+  width: 100px !important;
+}
