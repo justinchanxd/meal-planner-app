@@ -12,7 +12,7 @@ import {
   CssBaseline,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import WeekCalendar from "./components/WeekCalendar";
 import RecipeManagement from "./components/RecipeManagement";
 
@@ -65,15 +65,15 @@ function App() {
           <ListItem
             button
             component={Link}
-            to="/"
-            selected={location.pathname === "/"}
+            to="/calendar"
+            selected={location.pathname === "/calendar"}
             onClick={() => {
               setResetTrigger((prev) => prev + 1);
               setDrawerOpen(false);
             }}
             sx={{
               backgroundColor:
-                location.pathname === "/"
+                location.pathname === "/calendar"
                   ? "primary.light"
                   : "transparent",
               "&.Mui-selected": {
@@ -113,7 +113,11 @@ function App() {
         </List>
       </Drawer>
       <Routes>
-        <Route path="/" element={<WeekCalendar resetTrigger={resetTrigger} />} />
+        <Route path="/" element={<Navigate to="/calendar" replace />} />
+        <Route
+          path="/calendar"
+          element={<WeekCalendar resetTrigger={resetTrigger} />}
+        />
         <Route path="/recipe" element={<RecipeManagement />} />
       </Routes>
     </ThemeProvider>
