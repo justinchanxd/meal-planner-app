@@ -257,9 +257,17 @@ const WeekCalendar = ({ resetTrigger }) => {
       <Typography variant="h5" className="titleTypography">
         Meal Calendar📅
       </Typography>
-      <Typography variant="body1" className="subtitleTypography">
-        Week of {formatWeek(currentWeekStart)}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+        <IconButton onClick={() => navigateWeek(-1)}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="body1" className="subtitleTypography">
+          Week of {formatWeek(currentWeekStart)}
+        </Typography>
+        <IconButton onClick={() => navigateWeek(1)}>
+          <ArrowForwardIcon />
+        </IconButton>
+      </Box>
       <Grid container spacing={1} justifyContent="center">
         {weekDays.map((date, i) => {
           const dateStr = date.toISOString().split("T")[0];

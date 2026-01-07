@@ -61,7 +61,7 @@ function App() {
         </Toolbar>
       </AppBar>
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <List sx={{ width: 250 }}>
+        <List sx={{ width: 200 }}>
           <ListItem
             button
             component={Link}
