@@ -61,9 +61,7 @@ const WeekCalendar = ({ resetTrigger }) => {
       const parsed = JSON.parse(saved);
       // Filter to only date-based keys (YYYY-MM-DD)
       const cleanMeals = Object.fromEntries(
-        Object.entries(parsed).filter(([key]) =>
-          DATE_REGEX.test(key)
-        )
+        Object.entries(parsed).filter(([key]) => DATE_REGEX.test(key))
       );
       setMeals(cleanMeals);
       // Update localStorage with cleaned data
@@ -120,7 +118,11 @@ const WeekCalendar = ({ resetTrigger }) => {
       .filter((key) => key.endsWith(`-${mealType}`))
       .reduce((sum, key) => {
         const dayIndex = parseInt(key.split("-")[0]);
-        return sum + (meals[weekDays[dayIndex].toISOString().split("T")[0]]?.[mealType] || 0);
+        return (
+          sum +
+          (meals[weekDays[dayIndex].toISOString().split("T")[0]]?.[mealType] ||
+            0)
+        );
       }, 0);
 
   const selectedLunch = calculateSelected("lunch");
@@ -249,7 +251,10 @@ const WeekCalendar = ({ resetTrigger }) => {
   const formatWeek = (start) => {
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
-    return `${start.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH_DAY)} - ${end.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH_DAY)}`;
+    return `${start.toLocaleDateString(
+      LOCALE,
+      DATE_OPTIONS_MONTH_DAY
+    )} - ${end.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH_DAY)}`;
   };
 
   return (
@@ -257,7 +262,14 @@ const WeekCalendar = ({ resetTrigger }) => {
       <Typography variant="h5" className="titleTypography">
         Meal Calendar📅
       </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 1,
+        }}
+      >
         <IconButton onClick={() => navigateWeek(-1)}>
           <ArrowBackIcon />
         </IconButton>
@@ -274,39 +286,74 @@ const WeekCalendar = ({ resetTrigger }) => {
           const dayName = date.toLocaleDateString(LOCALE, DATE_OPTIONS_WEEKDAY);
           const month = date.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH);
           const day = date.toLocaleDateString(LOCALE, DATE_OPTIONS_DAY);
+          const today = new Date();
+          const localDateStr =
+            today.getFullYear() +
+            "-" +
+            String(today.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(today.getDate()).padStart(2, "0");
+          const isToday = dateStr === localDateStr;
           return (
             <Grid item xs={1.6} sm={1.5} md={1.5} key={dateStr}>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {/* Day Info Card */}
                 <Paper
+                  style={{ padding: 0 }}
                   elevation={3}
                   sx={{
                     p: 0.5,
                     textAlign: "center",
-                    backgroundColor: "background.paper",
+                    backgroundColor: isToday
+                      ? "primary.light"
+                      : "background.paper",
+                    border: isToday
+                      ? `2px solid ${BORDER_COLOR_SELECTED}`
+                      : "2px solid transparent",
                   }}
                 >
-                  <Typography variant="caption" sx={{ fontSize: FONT_SIZE_CAPTION }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: FONT_SIZE_CAPTION }}
+                  >
                     {dayName}
                   </Typography>
                   <br></br>
-                  <Typography variant="caption" sx={{ fontSize: FONT_SIZE_CAPTION }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: FONT_SIZE_CAPTION }}
+                  >
                     {month} {day}
                   </Typography>
                 </Paper>
                 {/* Lunch Card */}
-                <MealCard dateStr={dateStr} type="lunch" i={i} meals={meals} selectedMeals={selectedMeals} toggleMealSelection={toggleMealSelection} updateMeal={updateMeal} />
+                <MealCard
+                  dateStr={dateStr}
+                  type="lunch"
+                  i={i}
+                  meals={meals}
+                  selectedMeals={selectedMeals}
+                  toggleMealSelection={toggleMealSelection}
+                  updateMeal={updateMeal}
+                />
                 {/* Dinner Card */}
-                <MealCard dateStr={dateStr} type="dinner" i={i} meals={meals} selectedMeals={selectedMeals} toggleMealSelection={toggleMealSelection} updateMeal={updateMeal} />
+                <MealCard
+                  dateStr={dateStr}
+                  type="dinner"
+                  i={i}
+                  meals={meals}
+                  selectedMeals={selectedMeals}
+                  toggleMealSelection={toggleMealSelection}
+                  updateMeal={updateMeal}
+                />
               </Box>
             </Grid>
           );
         })}
       </Grid>
 
-
       <Typography variant="body1" align="center" sx={{ mt: 2 }}>
-        📊Selected Summary: 
+        📊Selected Summary:
       </Typography>
       <Typography variant="body2" align="center">
         Lunch: {selectedLunch}
@@ -317,7 +364,7 @@ const WeekCalendar = ({ resetTrigger }) => {
       <Typography variant="body2" align="center">
         Total: {selectedTotal}
       </Typography>
-      
+
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 1 }}>
         <Button variant="contained" onClick={saveMeals} className="buttonMp">
           Save
@@ -325,9 +372,13 @@ const WeekCalendar = ({ resetTrigger }) => {
         <Button variant="outlined" onClick={clearAllMeals} className="buttonMp">
           Clear All
         </Button>
-        {/* <Button variant="outlined" onClick={() => setSelectedMeals([])} className="buttonMp">
+        <Button
+          variant="outlined"
+          onClick={() => setSelectedMeals([])}
+          className="buttonMp"
+        >
           Unselect All
-        </Button> */}
+        </Button>
       </Box>
       <Box sx={{ display: "flex", justifyContent: "center", mt: 0.5, gap: 1 }}>
         <Button variant="outlined" onClick={exportMeals} className="buttonMp">
@@ -342,7 +393,9 @@ const WeekCalendar = ({ resetTrigger }) => {
         <DialogTitle>{DIALOG_TITLE_SAVED}</DialogTitle>
         <DialogContent>{DIALOG_MESSAGE_SAVED}</DialogContent>
         <DialogActions>
-          <Button onClick={() => setSaveDialogOpen(false)} className="buttonMp">{DIALOG_BUTTON_OK}</Button>
+          <Button onClick={() => setSaveDialogOpen(false)} className="buttonMp">
+            {DIALOG_BUTTON_OK}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
