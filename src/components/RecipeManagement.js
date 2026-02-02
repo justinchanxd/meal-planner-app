@@ -32,7 +32,7 @@ const RecipeManagement = () => {
   const [recipes, setRecipes] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState("add"); // 'add' or 'edit'
-  const [currentRecipe, setCurrentRecipe] = useState({ name: "", ingredients: "", instructions: "", remark: "" });
+  const [currentRecipe, setCurrentRecipe] = useState({ name: "", ingredients: "", instructions: "", url: "", remark: "" });
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -61,8 +61,16 @@ const RecipeManagement = () => {
       header: "Ingredients",
     },
     {
-      accessorKey: "remark",
-      header: "Remark",
+      accessorKey: "url",
+      header: "URL",
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return value ? (
+          <a href={value} target="_blank" rel="noopener noreferrer">
+            Click
+          </a>
+        ) : "";
+      },
     },
   ];
 
@@ -92,7 +100,7 @@ const RecipeManagement = () => {
 
   const handleAdd = () => {
     setDialogMode("add");
-    setCurrentRecipe({ name: "", ingredients: "", instructions: "", remark: "" });
+    setCurrentRecipe({ name: "", ingredients: "", instructions: "", url: "", remark: "" });
     setDialogOpen(true);
   };
 
@@ -251,6 +259,14 @@ const RecipeManagement = () => {
             label="Instructions"
             value={currentRecipe.instructions}
             onChange={(e) => setCurrentRecipe({ ...currentRecipe, instructions: e.target.value })}
+            className="textField"
+            multiline
+            rows={4}
+          />
+          <TextField
+            label="URL"
+            value={currentRecipe.url}
+            onChange={(e) => setCurrentRecipe({ ...currentRecipe, url: e.target.value })}
             className="textField"
             multiline
             rows={4}

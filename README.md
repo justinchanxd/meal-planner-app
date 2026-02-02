@@ -51,14 +51,6 @@ npm start
 
 App runs at `http://localhost:3000`.
 
-### Building for Production
-
-```
-npm run build
-```
-
-Generates optimized build in `build` folder.
-
 ### Deployment to GitHub Pages
 
 1. Install gh-pages:
