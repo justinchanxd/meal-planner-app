@@ -1,20 +1,13 @@
 {
   "files": {
-    "main.css": "/meal-planner-app/static/css/main.ab252647.chunk.css",
-    "main.js": "/meal-planner-app/static/js/main.74f57e24.chunk.js",
-    "main.js.map": "/meal-planner-app/static/js/main.74f57e24.chunk.js.map",
-    "runtime-main.js": "/meal-planner-app/static/js/runtime-main.c065253f.js",
-    "runtime-main.js.map": "/meal-planner-app/static/js/runtime-main.c065253f.js.map",
-    "static/js/2.43244216.chunk.js": "/meal-planner-app/static/js/2.43244216.chunk.js",
-    "static/js/2.43244216.chunk.js.map": "/meal-planner-app/static/js/2.43244216.chunk.js.map",
+    "main.css": "/meal-planner-app/static/css/main.5e588b8b.css",
+    "main.js": "/meal-planner-app/static/js/main.d49f1228.js",
     "index.html": "/meal-planner-app/index.html",
-    "static/css/main.ab252647.chunk.css.map": "/meal-planner-app/static/css/main.ab252647.chunk.css.map",
-    "static/js/2.43244216.chunk.js.LICENSE.txt": "/meal-planner-app/static/js/2.43244216.chunk.js.LICENSE.txt"
+    "main.5e588b8b.css.map": "/meal-planner-app/static/css/main.5e588b8b.css.map",
+    "main.d49f1228.js.map": "/meal-planner-app/static/js/main.d49f1228.js.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.c065253f.js",
-    "static/js/2.43244216.chunk.js",
-    "static/css/main.ab252647.chunk.css",
-    "static/js/main.74f57e24.chunk.js"
+    "static/css/main.5e588b8b.css",
+    "static/js/main.d49f1228.js"
   ]
 }
