@@ -34,9 +34,12 @@ export const DIALOG_TITLE_SAVED = "Data Saved";
 export const DIALOG_MESSAGE_SAVED = "Meal data saved successfully.";
 export const ALERT_INVALID_JSON = "Invalid JSON file";
 export const ALERT_IMPORTED = "Meals imported!";
-export const ALERT_INVALID_RECIPES_FORMAT = "Invalid recipes format. Expected an array.";
-export const CONFIRM_IMPORT_RECIPES = "Importing will replace all existing recipes. Are you sure?";
-export const BEFORE_UNLOAD_MESSAGE = "You have unsaved changes. Are you sure you want to leave?";
+export const ALERT_INVALID_RECIPES_FORMAT =
+  "Invalid recipes format. Expected an array.";
+export const CONFIRM_IMPORT_RECIPES =
+  "Importing will replace all existing recipes. Are you sure?";
+export const BEFORE_UNLOAD_MESSAGE =
+  "You have unsaved changes. Are you sure you want to leave?";
 export const DIALOG_BUTTON_OK = "OK";
 
 // Share API
@@ -50,5 +53,4 @@ export const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 export const BUTTON_SIZE = "small";
 
 // Admin flags
-export const ADMIN_FLAG = 0; // Set to 1 to enable admin features
-
+export const ADMIN_FLAG = 1; // Set to 1 to enable admin features
