@@ -17,10 +17,12 @@ import {
   DialogActions,
   TextField,
 } from "@mui/material";
-import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender } from "@tanstack/react-table";
+import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import {
   ALERT_INVALID_JSON,
   ALERT_INVALID_RECIPES_FORMAT,
@@ -32,25 +34,27 @@ const RecipeManagement = () => {
   const [recipes, setRecipes] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState("add"); // 'add' or 'edit'
-  const [currentRecipe, setCurrentRecipe] = useState({ name: "", ingredients: "", instructions: "", url: "", remark: "" });
+  const [currentRecipe, setCurrentRecipe] = useState({ name: "", ingredients: "", instructions: "", url: "", remark: "", order: 0 });
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Load recipes from localStorage on mount
+  // Load recipes from localStorage on mount and sort by order
   useEffect(() => {
     const saved = localStorage.getItem("recipes");
     if (saved) {
-      setRecipes(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      setRecipes(parsed.sort((a, b) => a.order - b.order));
     }
   }, []);
 
-  // Save recipes to localStorage
+  // Save recipes to localStorage (always sorted by order)
   const saveRecipes = (newRecipes) => {
-    setRecipes(newRecipes);
-    localStorage.setItem("recipes", JSON.stringify(newRecipes));
+    const sorted = newRecipes.sort((a, b) => a.order - b.order);
+    setRecipes(sorted);
+    localStorage.setItem("recipes", JSON.stringify(sorted));
   };
 
-  // Define columns
+  // Define columns (removed sorting since we use manual order)
   const columns = [
     {
       accessorKey: "name",
@@ -72,6 +76,20 @@ const RecipeManagement = () => {
         ) : "";
       },
     },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <Box>
+          <IconButton onClick={(e) => { e.stopPropagation(); moveUp(row.original.id); }} disabled={row.original.order === 1}>
+            <ArrowUpwardIcon />
+          </IconButton>
+          <IconButton onClick={(e) => { e.stopPropagation(); moveDown(row.original.id); }} disabled={row.original.order === recipes.length}>
+            <ArrowDownwardIcon />
+          </IconButton>
+        </Box>
+      ),
+    },
   ];
 
   const filteredRecipes = recipes.filter((r) =>
@@ -84,8 +102,31 @@ const RecipeManagement = () => {
     data: filteredRecipes,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
+
+  // Move recipe up in order
+  const moveUp = (id) => {
+    const index = recipes.findIndex((r) => r.id === id);
+    if (index > 0) {
+      const newRecipes = [...recipes];
+      [newRecipes[index - 1], newRecipes[index]] = [newRecipes[index], newRecipes[index - 1]];
+      // Update orders
+      newRecipes.forEach((r, i) => (r.order = i + 1));
+      saveRecipes(newRecipes);
+    }
+  };
+
+  // Move recipe down in order
+  const moveDown = (id) => {
+    const index = recipes.findIndex((r) => r.id === id);
+    if (index < recipes.length - 1) {
+      const newRecipes = [...recipes];
+      [newRecipes[index], newRecipes[index + 1]] = [newRecipes[index + 1], newRecipes[index]];
+      // Update orders
+      newRecipes.forEach((r, i) => (r.order = i + 1));
+      saveRecipes(newRecipes);
+    }
+  };
 
   const handleEdit = (recipe) => {
     setDialogMode("edit");
@@ -95,12 +136,14 @@ const RecipeManagement = () => {
 
   const handleDelete = (id) => {
     const newRecipes = recipes.filter((r) => r.id !== id);
+    // Reassign orders after deletion
+    newRecipes.forEach((r, i) => (r.order = i + 1));
     saveRecipes(newRecipes);
   };
 
   const handleAdd = () => {
     setDialogMode("add");
-    setCurrentRecipe({ name: "", ingredients: "", instructions: "", url: "", remark: "" });
+    setCurrentRecipe({ name: "", ingredients: "", instructions: "", url: "", remark: "", order: recipes.length + 1 });
     setDialogOpen(true);
   };
 
@@ -142,6 +185,10 @@ const RecipeManagement = () => {
           const importedRecipes = JSON.parse(e.target.result);
           if (Array.isArray(importedRecipes)) {
             if (window.confirm(CONFIRM_IMPORT_RECIPES)) {
+              // Assign orders if missing
+              importedRecipes.forEach((r, i) => {
+                if (!r.order) r.order = i + 1;
+              });
               saveRecipes(importedRecipes);
             }
           } else {
@@ -197,12 +244,8 @@ const RecipeManagement = () => {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableCell key={header.id} onClick={header.column.getToggleSortingHandler()}>
+                  <TableCell key={header.id}>
                     {flexRender(header.column.columnDef.header, header.getContext())}
-                    {{
-                      asc: " 🔼",
-                      desc: " 🔽",
-                    }[header.column.getIsSorted()] ?? null}
                   </TableCell>
                 ))}
               </TableRow>
