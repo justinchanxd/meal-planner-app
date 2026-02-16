@@ -2,7 +2,6 @@
   "name": "meal-planner-app",
   "version": "1.0.0",
   "description": "A meal planning application for housewives to review and plan meals for each day of the week.",
-  "homepage": "https://justinchanxd.github.io/meal-planner-app/",
   "main": "src/index.js",
   "scripts": {
     "start": "react-scripts start",
