@@ -6,7 +6,7 @@ import App from './App';
 
 ReactDOM.render(
   <React.StrictMode>
-    <Router basename="/meal-planner-app">
+    <Router basename="/">
       <App />
     </Router>
   </React.StrictMode>,
