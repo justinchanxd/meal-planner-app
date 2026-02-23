@@ -29,8 +29,9 @@ import {
   CONFIRM_IMPORT_RECIPES,
   ADMIN_FLAG,
 } from "../utils/constants";
+import { supabase } from '../utils/supabase';
 
-const RecipeManagement = () => {
+const RecipeManagement = ({ user }) => {
   const [recipes, setRecipes] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState("add"); // 'add' or 'edit'
@@ -38,20 +39,32 @@ const RecipeManagement = () => {
   const fileInputRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Load recipes from localStorage on mount and sort by order
+  // Load recipes from Supabase on mount and sort by order
   useEffect(() => {
-    const saved = localStorage.getItem("recipes");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setRecipes(parsed.sort((a, b) => a.order - b.order));
-    }
-  }, []);
+    const loadRecipes = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('order');
+      if (error) console.error(error);
+      else setRecipes(data || []);
+    };
+    loadRecipes();
+  }, [user]);
 
-  // Save recipes to localStorage (always sorted by order)
-  const saveRecipes = (newRecipes) => {
+  // Save recipes to Supabase (always sorted by order)
+  const saveRecipes = async (newRecipes) => {
     const sorted = newRecipes.sort((a, b) => a.order - b.order);
     setRecipes(sorted);
-    localStorage.setItem("recipes", JSON.stringify(sorted));
+    // Upsert each recipe
+    for (const recipe of sorted) {
+      const { error } = await supabase
+        .from('recipes')
+        .upsert({ ...recipe, user_id: user.id });
+      if (error) console.error(error);
+    }
   };
 
   // Define columns (removed sorting since we use manual order)
@@ -105,26 +118,26 @@ const RecipeManagement = () => {
   });
 
   // Move recipe up in order
-  const moveUp = (id) => {
+  const moveUp = async (id) => {
     const index = recipes.findIndex((r) => r.id === id);
     if (index > 0) {
       const newRecipes = [...recipes];
       [newRecipes[index - 1], newRecipes[index]] = [newRecipes[index], newRecipes[index - 1]];
       // Update orders
       newRecipes.forEach((r, i) => (r.order = i + 1));
-      saveRecipes(newRecipes);
+      await saveRecipes(newRecipes);
     }
   };
 
   // Move recipe down in order
-  const moveDown = (id) => {
+  const moveDown = async (id) => {
     const index = recipes.findIndex((r) => r.id === id);
     if (index < recipes.length - 1) {
       const newRecipes = [...recipes];
       [newRecipes[index], newRecipes[index + 1]] = [newRecipes[index + 1], newRecipes[index]];
       // Update orders
       newRecipes.forEach((r, i) => (r.order = i + 1));
-      saveRecipes(newRecipes);
+      await saveRecipes(newRecipes);
     }
   };
 
@@ -134,11 +147,11 @@ const RecipeManagement = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const newRecipes = recipes.filter((r) => r.id !== id);
     // Reassign orders after deletion
     newRecipes.forEach((r, i) => (r.order = i + 1));
-    saveRecipes(newRecipes);
+    await saveRecipes(newRecipes);
   };
 
   const handleAdd = () => {
@@ -151,13 +164,13 @@ const RecipeManagement = () => {
     setDialogOpen(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (dialogMode === "add") {
       const newRecipe = { ...currentRecipe, id: Date.now() };
-      saveRecipes([...recipes, newRecipe]);
+      await saveRecipes([...recipes, newRecipe]);
     } else {
       const updated = recipes.map((r) => (r.id === currentRecipe.id ? currentRecipe : r));
-      saveRecipes(updated);
+      await saveRecipes(updated);
     }
     setDialogOpen(false);
   };
@@ -176,11 +189,11 @@ const RecipeManagement = () => {
     fileInputRef.current.click();
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const importedRecipes = JSON.parse(e.target.result);
           if (Array.isArray(importedRecipes)) {
@@ -189,7 +202,7 @@ const RecipeManagement = () => {
               importedRecipes.forEach((r, i) => {
                 if (!r.order) r.order = i + 1;
               });
-              saveRecipes(importedRecipes);
+              await saveRecipes(importedRecipes);
             }
           } else {
             alert(ALERT_INVALID_RECIPES_FORMAT);

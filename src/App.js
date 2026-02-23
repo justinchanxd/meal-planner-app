@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import {
   AppBar,
@@ -10,11 +10,16 @@ import {
   ListItem,
   ListItemText,
   CssBaseline,
+  Box,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "./utils/supabase";
 import WeekCalendar from "./components/WeekCalendar";
 import RecipeManagement from "./components/RecipeManagement";
+import AuthCallback from "./pages/AuthCallback";
 
 const theme = createTheme({
   palette: {
@@ -42,6 +47,48 @@ function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [resetTrigger, setResetTrigger] = useState(0);
   const location = useLocation();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+    getSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (!user) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            providers={["google"]}
+            redirectTo={`${window.location.origin}/auth/callback`}
+          />
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -114,11 +161,12 @@ function App() {
       </Drawer>
       <Routes>
         <Route path="/" element={<Navigate to="/calendar" replace />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/calendar"
-          element={<WeekCalendar resetTrigger={resetTrigger} />}
+          element={<WeekCalendar resetTrigger={resetTrigger} user={user} />}
         />
-        <Route path="/recipe" element={<RecipeManagement />} />
+        <Route path="/recipe" element={<RecipeManagement user={user} />} />
       </Routes>
     </ThemeProvider>
   );

@@ -40,8 +40,9 @@ import {
   BUTTON_SIZE,
   DIALOG_BUTTON_OK,
 } from "../utils/constants";
+import { supabase } from '../utils/supabase';
 
-const WeekCalendar = ({ resetTrigger }) => {
+const WeekCalendar = ({ resetTrigger, user }) => {
   const getMonday = (date) => {
     const d = new Date(date);
     const day = d.getDay();
@@ -53,21 +54,31 @@ const WeekCalendar = ({ resetTrigger }) => {
     getMonday(new Date())
   );
   const [meals, setMeals] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  // Load from localStorage on mount
+  // Load from Supabase on mount
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Filter to only date-based keys (YYYY-MM-DD)
-      const cleanMeals = Object.fromEntries(
-        Object.entries(parsed).filter(([key]) => DATE_REGEX.test(key))
-      );
-      setMeals(cleanMeals);
-      // Update localStorage with cleaned data
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanMeals));
-    }
-  }, []);
+    const loadMeals = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('meals')
+        .select('*')
+        .eq('user_id', user.id);
+      if (error) console.error(error);
+      else {
+        const mealsObj = {};
+        data.forEach(meal => {
+          mealsObj[meal.date] = { lunch: meal.lunch, dinner: meal.dinner };
+        });
+        setMeals(mealsObj);
+      }
+      setLoading(false);
+    };
+    loadMeals();
+  }, [user]);
 
   const getWeekDays = (start) => {
     const days = [];
@@ -163,44 +174,70 @@ const WeekCalendar = ({ resetTrigger }) => {
     setHasUnsavedChanges(true);
   };
 
-  // Save to localStorage
-  const saveMeals = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(meals));
-    setHasUnsavedChanges(false);
-    setSaveDialogOpen(true);
+  // Save to Supabase
+  const saveMeals = async () => {
+    if (!user) return;
+    const mealsToSave = Object.entries(meals).map(([date, { lunch, dinner }]) => ({
+      user_id: user.id,
+      date,
+      lunch,
+      dinner
+    }));
+    const { error } = await supabase.from('meals').upsert(mealsToSave);
+    if (error) console.error(error);
+    else {
+      setHasUnsavedChanges(false);
+      setSaveDialogOpen(true);
+    }
   };
 
   // Export as JSON
   const exportMeals = async () => {
-    const filteredMeals = Object.fromEntries(
-      Object.entries(meals)
-        .filter(([key, value]) => {
-          const lunch = value?.lunch || 0;
-          const dinner = value?.dinner || 0;
-          return lunch > 0 || dinner > 0;
-        })
-        .sort(([a], [b]) => a.localeCompare(b))
-    );
-    const dataStr = JSON.stringify(filteredMeals, null, 2);
-    const dataBlob = new Blob([dataStr], { type: MIME_TYPE_JSON });
-    const file = new File([dataBlob], EXPORT_FILENAME, {
-      type: MIME_TYPE_JSON,
-    });
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('user_id', user.id);
+    if (error) console.error(error);
+    else {
+      const filteredMeals = {};
+      data.forEach(meal => {
+        if (meal.lunch > 0 || meal.dinner > 0) {
+          filteredMeals[meal.date] = { lunch: meal.lunch, dinner: meal.dinner };
+        }
+      });
+      const sortedMeals = Object.fromEntries(
+        Object.entries(filteredMeals).sort(([a], [b]) => a.localeCompare(b))
+      );
+      const dataStr = JSON.stringify(sortedMeals, null, 2);
+      const dataBlob = new Blob([dataStr], { type: MIME_TYPE_JSON });
+      const file = new File([dataBlob], EXPORT_FILENAME, {
+        type: MIME_TYPE_JSON,
+      });
 
-    if (
-      navigator.share &&
-      navigator.canShare &&
-      navigator.canShare({ files: [file] })
-    ) {
-      try {
-        await navigator.share({
-          title: SHARE_TITLE,
-          text: SHARE_TEXT,
-          files: [file],
-        });
-      } catch (err) {
-        console.error("Share failed:", err);
-        // Fallback to download
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        try {
+          await navigator.share({
+            title: SHARE_TITLE,
+            text: SHARE_TEXT,
+            files: [file],
+          });
+        } catch (err) {
+          console.error("Share failed:", err);
+          // Fallback to download
+          const url = URL.createObjectURL(dataBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = EXPORT_FILENAME;
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+      } else {
+        // Fallback for browsers without Web Share API
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement("a");
         link.href = url;
@@ -208,28 +245,28 @@ const WeekCalendar = ({ resetTrigger }) => {
         link.click();
         URL.revokeObjectURL(url);
       }
-    } else {
-      // Fallback for browsers without Web Share API
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = EXPORT_FILENAME;
-      link.click();
-      URL.revokeObjectURL(url);
     }
   };
 
   // Import from JSON
-  const importMeals = (event) => {
+  const importMeals = async (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const imported = JSON.parse(e.target.result);
           setMeals(imported);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
-          alert(ALERT_IMPORTED);
+          // Save to Supabase
+          const mealsToSave = Object.entries(imported).map(([date, { lunch, dinner }]) => ({
+            user_id: user.id,
+            date,
+            lunch,
+            dinner
+          }));
+          const { error } = await supabase.from('meals').upsert(mealsToSave);
+          if (error) console.error(error);
+          else alert(ALERT_IMPORTED);
         } catch (err) {
           alert(ALERT_INVALID_JSON);
         }
@@ -256,6 +293,14 @@ const WeekCalendar = ({ resetTrigger }) => {
       DATE_OPTIONS_MONTH_DAY
     )} - ${end.toLocaleDateString(LOCALE, DATE_OPTIONS_MONTH_DAY)}`;
   };
+
+  if (loading) {
+    return (
+      <Box className="pageContainer" sx={{ textAlign: "center", mt: 4 }}>
+        <Typography variant="h6">Loading your meals...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box className="pageContainer">
